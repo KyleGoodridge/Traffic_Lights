@@ -1,0 +1,131 @@
+void setup() {
+  // put your setup code here, to run once:
+
+#include "tm4c123gh6pm.h"
+
+void SysTick_Init(void);  //Initializes the SysTick Timer
+void SysTick_Wait(unsigned long delay1);
+void SysTick_Wait10ms(unsigned long delay1);  //Waiting time is going to be 10ms
+
+struct State{
+        unsigned long TrafficLights_Cars;   //6 bits output for the 6 different states of lights
+        //If implementing pedestrian, put in here
+        unsigned long TrafficLights_Ped;  //2 bit output for the "walk" and "do not cross"
+        unsigned long Time;   //Count needs to be set later to 800k so delay is 10 ms
+        unsigned long Next[4]; //Next  States = 4 w/o ped, with ped, change to 8!!!
+
+};
+long unsigned FSM[4];
+
+typedef const struct State STyp;
+#define Green_North     0
+#define Yellow_North    1
+
+#define Green_East      2
+#define Yellow_East     3
+
+//#define Ped_Cross     4
+//#define Ped_Hurry     5
+//#define Ped_Cross_Off 6
+//#define Ped_Hurry_Off 7
+
+STyp FSM[4] = {//if implementing crosswalk, 
+
+                (0x21, 3000, (Green_North, Yellow_North, Green_North, Yellow_North)),  //State 0
+                (0x22,  500, (Green_East, Green_East, Green_East, Green_East)),        //State 1
+                (0x0C, 3000, (Green_East, Green_East, Yellow_East, Yellow_East)),      //State 2
+                (0x14,  500, (Green_North, Green_North, Green_North, Green_North))     //State 4
+};   
+
+
+unsigned long S;   //The index to the current state
+unsigned long Input;
+unsigned long delay1;
+volatile unsigned long delay;
+
+
+
+
+}
+
+
+
+
+void loop() {
+  // put your main code here, to run repeatedly: 
+
+ SysTick_Init(){
+  NVIC_ST_CTRL_R = 0;           //Disable SysTick during Setup
+  NVIC_ST_CTRL_R = 0x00000005;  //Enable SysTick with Core Clock
+}
+
+//Tiva Deals with a 80MHz Clock which equals 12.5nsec
+ SysTick_Wait(unsigned long delay1)
+    (
+      NVIC_ST_RELAOD_R = delay1-1;  //Number of Counts to wait, length of the delay vector
+      NVIC_ST_CURRENT_R = 0;        //Any value written to CURRENT clears
+        while((NVIC_ST_CTRL_R & 0x00010000)) == 0){
+          //Continuously 0, waits for bit to be 1
+       }
+      
+}
+//If we desire a 10ms delay...
+SysTick_Wait10ms(delay1)
+  {
+    unsigned long i;
+    for(i=0, i<delay1, i++)
+      {
+        SysTick_Wait(800000); //Waits for 10 ms
+      }
+  
+}
+
+  //volatile unsigned long delay;
+    SysTick_Init();
+      SYSCTL_RCGC2_R = 0x13;            //This line activates the clock for port A, E, B
+      delay = SYSCTL_RCGC2_R;           //Ports B, E, A are not necessary to unlock
+      GPIO_PORTA_AMSEL_R = 0x00;       //Disable the analog on Port A
+      GPIO_PORTE_AMSEL_R = 0x00;       //Disable the analog on Port E
+      GPIO_PORTB_AMSEL_R = 0x00;       //Disable the analog on Port B
+
+      GPIO_PORTA_PCTL_R = 0x00000000;   //Enable Regular GPIO
+      GPIO_PORTE_PCTL_R = 0x00000000;   //Enable Regular GPIO
+      GPIO_PORTB_PCTL_R = 0x00000000;   //Enable Regular GPIO
+
+      GPIO_PORTA_DIR_R = 0x0C;          //Generates Outputs for cross walk
+      GPIO_PORTE_DIR_R = 0x00;          //Generates Inputs for PE0-PE2
+      GPIO_PORTB_DIR_R = 0x3F;          //Generates Outputs for PB-PB5
+
+      GPIO_PORTA_AFSEL_R = 0x00;        //Disable Alternative Function
+      GPIO_PORTE_AFSEL_R = 0x00;        //Disable Alternative Function
+      GPIO_PORTB_AFSEL_R = 0x00;        //Disable Alternative Function
+
+      GPIO_PORTA_DEN_R = 0x0C;          //Enable Digital I/O PA2
+      GPIO_PORTE_DEN_R = 0x00;          //Enable Digital I/O PE0
+      GPIO_PORTA_DEN_R = 0x3F;          //Enable Digital I/O PB0
+
+      unsigned long S;
+      S = Green_North;                     //Default is setting the Green Light in the North Direction
+
+
+          while(1)
+            {   typedef const struct State STyp;
+            STyp FSM[4] = //if implementing crosswalk, 
+{
+                {0x21, 3000, {Green_North, Yellow_North, Green_North, Yellow_North}},  //State 0
+                {0x22,  500, {Green_East, Green_East, Green_East, Green_East}},        //State 1
+                {0x0C, 3000, {Green_East, Green_East, Yellow_East, Yellow_East}},      //State 2
+                {0x14,  500, {Green_North, Green_North, Green_North, Green_North}}    //State 3
+  
+};
+            
+                GPIO_PORTB_DATA_R = FSM[S].TrafficLights_Cars;
+                //GPIO_PORTB_DATA_R = FSM[S].TrafficLights_Ped;
+                SysTick_Wait10ms(FSM[S].Time);
+                Input = GPIO_PORTE_DATA_R;    //Reads Data
+                S = FSM[S].Next[Input];
+            }
+}
+
+
+
